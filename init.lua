@@ -27,7 +27,7 @@ require('packer').startup(function(use)
   -- Language support
   use 'editorconfig/editorconfig-vim'
   use "fladson/vim-kitty"
-  use 'cdelledonne/vim-cmake'
+	use 'ilyachur/cmake4vim'
   use 'p00f/clangd_extensions.nvim'
 
   -- Misc UI
@@ -398,7 +398,8 @@ require('lualine').setup {
 
 -- CMake
 
-vim.g.cmake_build_dir_location = "build"
+vim.g.cmake_build_dir = "build"
+vim.g.cmake_ctest_args = "--output-on-failure"
 
 -- Indent blankline
 --

@@ -1,6 +1,3 @@
--- Extend RTP
-vim.cmd [[set runtimepath=$TOOLCHAIN_ROOT/config/nvim,$VIMRUNTIME]]
-
 -- Install packer if we need to...
 
 local install_path = vim.fn.stdpath 'data' .. '/site/pack/packer/start/packer.nvim'
@@ -70,11 +67,296 @@ require('packer').startup(function(use)
 
 end)
 
-require('options')
-require('colors')
-require('lsp')
-require('autocomplete')
-require('autocmd')
+--- Options
+
+-- Text
+vim.o.wrap = false
+vim.o.breakindent = true
+vim.o.spelloptions = 'camel'
+vim.o.spellcapcheck = ''
+
+-- Search
+vim.o.hlsearch = false
+vim.o.ignorecase = true
+vim.o.smartcase = true
+
+-- Display
+vim.o.termguicolors = true
+vim.wo.colorcolumn = "72,99"
+vim.wo.number = true
+vim.wo.signcolumn = 'yes'
+vim.o.equalalways = false
+vim.o.scrolloff = 8
+
+-- Interactivity
+vim.o.updatetime = 500
+vim.o.mouse = 'a'
+
+-- File Management
+vim.o.undofile = true
+
+--- Colors
+
+vim.g.everforest_background = "medium"
+vim.cmd [[colorscheme everforest]]
+
+vim.cmd [[
+hi ErrorText cterm=underline gui=underline
+hi WarningText cterm=underline gui=underline
+hi InfoText cterm=underline gui=underline
+hi HintText cterm=underline gui=underline
+
+hi SpellBad cterm=undercurl gui=undercurl
+]]
+
+
+--- LSP
+
+-- Null-ls
+
+local builtins = require("null-ls").builtins
+require("null-ls").setup({
+  sources = {
+    builtins.diagnostics.codespell,
+    builtins.diagnostics.pylint,
+    builtins.diagnostics.jsonlint,
+    builtins.diagnostics.yamllint,
+    builtins.diagnostics.yamllint,
+    builtins.diagnostics.markdownlint,
+    builtins.formatting.markdownlint,
+    builtins.formatting.black,
+    builtins.formatting.cmake_format,
+    builtins.code_actions.gitsigns
+  }
+})
+
+-- LSP settings
+local lspconfig = require 'lspconfig'
+local on_attach = function(_, bufnr)
+  local opts = { buffer = bufnr }
+  vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+  vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+  vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+  vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
+  vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
+  vim.keymap.set('n', '<leader>wl', function() vim.inspect(vim.lsp.buf.list_workspace_folders()) end, opts)
+  vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, opts)
+  vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+  vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+  vim.api.nvim_create_user_command("Format", vim.lsp.buf.formatting, {})
+  vim.api.nvim_create_user_command("FormatRange", vim.lsp.buf.range_formatting, {})
+  vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+  vim.keymap.set('n', '<leader>fb', vim.lsp.buf.formatting, opts)
+  vim.keymap.set('n', '<leader>fr', vim.lsp.buf.range_formatting, opts)
+end
+
+-- nvim-cmp supports additional completion capabilities
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+
+-- Enable the following language servers
+local servers = { 'marksman', 'yamlls', 'rust_analyzer', 'pyright', 'tsserver' }
+for _, lsp in ipairs(servers) do
+  lspconfig[lsp].setup {
+    on_attach = on_attach,
+    capabilities = capabilities,
+    flags = { debounce_text_changes = 500 }
+  }
+end
+
+require("clangd_extensions").setup {
+  server = {
+    on_attach = on_attach,
+    capabilities = capabilities,
+    flags = { debounce_text_changes = 500 }
+  }
+}
+
+-- Treesitter configuration
+-- Parsers must be installed manually via :TSInstall
+require('nvim-treesitter.configs').setup {
+  ensure_installed = { "c", "cpp", "python", "yaml", "json", "html", "lua", "dot", "cmake", "bash" },
+  highlight = {
+    enable = true, -- false will disable the whole extension
+  },
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = 'gnn',
+      node_incremental = 'grn',
+      scope_incremental = 'grc',
+      node_decremental = 'grm',
+    },
+  },
+  indent = {
+    enable = true,
+  },
+  textobjects = {
+    select = {
+      enable = true,
+      lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
+      keymaps = {
+        -- You can use the capture groups defined in textobjects.scm
+        ['af'] = '@function.outer',
+        ['if'] = '@function.inner',
+        ['ac'] = '@class.outer',
+        ['ic'] = '@class.inner',
+      },
+    },
+    move = {
+      enable = true,
+      set_jumps = true, -- whether to set jumps in the jumplist
+      goto_next_start = {
+        [']m'] = '@function.outer',
+        [']]'] = '@class.outer',
+      },
+      goto_next_end = {
+        [']M'] = '@function.outer',
+        [']['] = '@class.outer',
+      },
+      goto_previous_start = {
+        ['[m'] = '@function.outer',
+        ['[['] = '@class.outer',
+      },
+      goto_previous_end = {
+        ['[M'] = '@function.outer',
+        ['[]'] = '@class.outer',
+      },
+    },
+  },
+}
+
+-- Diagnostics presentation
+
+vim.diagnostic.config({
+  signs = true,
+  virtual_text = false,
+  update_in_insert = false,
+  severity_sort = true
+})
+
+local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
+for type, icon in pairs(signs) do
+  local hl = "DiagnosticSign" .. type
+  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+end
+
+vim.api.nvim_create_autocmd({ 'CursorHold,CursorHoldI' }, {
+  desc = 'Diagnostics popver',
+  pattern = '*',
+  command = 'lua vim.diagnostic.open_float(nil, {focus=false})'
+})
+
+-- Trouble
+
+vim.keymap.set('n', '<leader>td', function() require 'trouble'.open('document_diagnostics') end)
+vim.keymap.set('n', '<leader>tr', function() require 'trouble'.open('lsp_references') end)
+vim.keymap.set('n', '<leader>tw', function() require 'trouble'.open('workspace_diagnostics') end)
+vim.keymap.set('n', '<leader>tq', function() require 'trouble'.open('quickfix') end)
+vim.keymap.set('n', '<leader>tt', function() require 'trouble'.toggle() end)
+
+--- Autocomplete
+
+vim.o.completeopt = 'menu,menuone,noselect'
+
+-- luasnip setup
+local luasnip = require 'luasnip'
+
+-- nvim-cmp setup
+local cmp = require 'cmp'
+cmp.setup {
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<CR>'] = cmp.mapping.confirm {
+      behavior = cmp.ConfirmBehavior.Replace,
+      select = true,
+    },
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+  }),
+  sources = {
+    { name = 'nvim_lsp' },
+    { name = 'omni' },
+    { name = 'path' },
+    { name = 'luasnip' }
+  },
+  sorting = {
+    comparators = {
+      cmp.config.compare.offset,
+      cmp.config.compare.exact,
+      cmp.config.compare.recently_used,
+      require("clangd_extensions.cmp_scores"),
+      cmp.config.compare.kind,
+      cmp.config.compare.sort_text,
+      cmp.config.compare.length,
+      cmp.config.compare.order,
+    },
+  },
+}
+
+cmp.setup.filetype('gitcommit', {
+  sources = {
+    { name = 'buffer' }
+  }
+})
+
+cmp.setup.filetype('json', {
+  sources = {
+    { name = 'buffer' }
+  }
+})
+
+--- Autocmd
+
+vim.api.nvim_create_autocmd({ 'FileType' }, {
+  desc = 'python settings',
+  pattern = 'python,yaml,c,cpp,markdown,go',
+  command = 'set spell'
+})
+
+vim.api.nvim_create_autocmd({ 'FileType' }, {
+  desc = 'doxygen comments',
+  pattern = 'python,c,cpp',
+  command = 'set comments^=:///'
+})
+
+vim.api.nvim_create_autocmd({ 'BufEnter' }, {
+  desc = 'doxygen ft',
+  pattern = '*.dox',
+  command = 'set ft=c.doxygen'
+})
+
+vim.api.nvim_create_autocmd({ 'TermOpen' }, {
+  desc = 'term setup',
+  pattern = '*',
+  command = 'set nospell nonumber'
+})
+
 
 -- Lualine
 

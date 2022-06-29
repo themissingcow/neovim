@@ -1,3 +1,4 @@
+--- Plugins {{{
 -- Install packer if we need to...
 
 local install_path = vim.fn.stdpath 'data' .. '/site/pack/packer/start/packer.nvim'
@@ -67,7 +68,8 @@ require('packer').startup(function(use)
 
 end)
 
---- Options
+--- }}}
+--- Options {{{
 
 -- Text
 vim.o.wrap = false
@@ -95,7 +97,8 @@ vim.o.mouse = 'a'
 -- File Management
 vim.o.undofile = true
 
---- Colors
+-- }}}
+--- Colors {{{
 
 vim.g.everforest_background = "medium"
 vim.cmd [[colorscheme everforest]]
@@ -110,7 +113,8 @@ hi SpellBad cterm=undercurl gui=undercurl
 ]]
 
 
---- LSP
+-- }}}
+--- LSP {{{
 
 -- Null-ls
 
@@ -257,7 +261,8 @@ vim.keymap.set('n', '<leader>tw', function() require 'trouble'.open('workspace_d
 vim.keymap.set('n', '<leader>tq', function() require 'trouble'.open('quickfix') end)
 vim.keymap.set('n', '<leader>tt', function() require 'trouble'.toggle() end)
 
---- Autocomplete
+-- }}}
+--- Autocomplete {{{
 
 vim.o.completeopt = 'menu,menuone,noselect'
 
@@ -331,7 +336,8 @@ cmp.setup.filetype('json', {
   }
 })
 
---- Autocmd
+-- }}}
+--- Autocmd {{{
 
 vim.api.nvim_create_autocmd({ 'FileType' }, {
   desc = 'python settings',
@@ -493,7 +499,8 @@ require("toggleterm").setup {
     open_mapping = [[<c-t>]],
 }
 
---- Bits and bobs
+-- }}}
+--- Bits and bobs {{{
 
 -- Retain selection after re-indenting
 vim.keymap.set('v', '<', '<gv')
@@ -539,4 +546,4 @@ vnoremap <leader>fc :<c-u>call CommentWrap()<CR>
 
 ]]
 
--- vim: ts=2 sts=2 sw=2 et
+-- vim: ts=2 sts=2 sw=2 foldmethod=marker

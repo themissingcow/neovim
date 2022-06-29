@@ -401,6 +401,10 @@ require('lualine').setup {
 vim.g.cmake_build_dir = "build"
 vim.g.cmake_ctest_args = "--output-on-failure"
 
+vim.keymap.set('n', '<leader>cb', ':CMakeBuild<CR>')
+vim.keymap.set('n', '<leader>ct', ':CTest<CR>')
+
+
 -- Indent blankline
 --
 require('indent_blankline').setup { char = '┊', show_trailing_blankline_indent = false }

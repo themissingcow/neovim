@@ -11,7 +11,8 @@ require("null-ls").setup({
     builtins.diagnostics.markdownlint,
     builtins.formatting.markdownlint,
     builtins.formatting.black,
-    builtins.formatting.cmake_format
+    builtins.formatting.cmake_format,
+    builtins.code_actions.gitsigns
   }
 })
 

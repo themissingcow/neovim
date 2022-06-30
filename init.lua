@@ -398,7 +398,7 @@ require('lualine').setup {
 
 -- CMake
 
-vim.g.cmake_build_dir_prefix = "build"
+vim.g.cmake_build_dir_prefix = "build/"
 vim.g.cmake_ctest_args = "--output-on-failure"
 
 vim.keymap.set('n', '<leader>cb', ':CMakeBuild<CR>')

@@ -172,7 +172,10 @@ end
 
 require("clangd_extensions").setup {
   server = {
-    on_attach = on_attach,
+    on_attach = function(unused, buffnr)
+			on_attach(unused, buffnr)
+			vim.keymap.set('n', '<leader>ga', ':ClangdSwitchSourceHeader<CR>') 
+		end,
     capabilities = capabilities,
     flags = { debounce_text_changes = 500 }
   }

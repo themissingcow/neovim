@@ -72,11 +72,15 @@ end)
 --- }}}
 --- Options {{{
 
+
 -- Text
 vim.o.wrap = false
 vim.o.breakindent = true
 vim.o.spelloptions = 'camel'
 vim.o.spellcapcheck = ''
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+vim.o.expandtab = false
 
 -- Search
 vim.o.hlsearch = false

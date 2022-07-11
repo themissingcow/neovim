@@ -126,7 +126,6 @@ hi SpellBad cterm=undercurl gui=undercurl
 local builtins = require("null-ls").builtins
 require("null-ls").setup({
   sources = {
-    builtins.diagnostics.codespell,
     builtins.diagnostics.pylint,
     builtins.diagnostics.jsonlint,
     builtins.diagnostics.yamllint,

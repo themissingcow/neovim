@@ -254,7 +254,7 @@ for type, icon in pairs(signs) do
   vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
 end
 
-vim.api.nvim_create_autocmd({ 'CursorHold,CursorHoldI' }, {
+vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
   desc = 'Diagnostics popver',
   pattern = '*',
   command = 'lua vim.diagnostic.open_float(nil, {focus=false})'

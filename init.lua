@@ -27,7 +27,7 @@ require('packer').startup(function(use)
   -- Language support
   use 'editorconfig/editorconfig-vim'
   use "fladson/vim-kitty"
-	use 'ilyachur/cmake4vim'
+  use 'ilyachur/cmake4vim'
   use 'p00f/clangd_extensions.nvim'
 
   -- Misc UI

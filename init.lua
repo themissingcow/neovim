@@ -36,6 +36,7 @@ require('packer').startup(function(use)
   use 'folke/trouble.nvim'
   use { "nvim-neo-tree/neo-tree.nvim", branch = "v2.x", requires = { "nvim-lua/plenary.nvim", "kyazdani42/nvim-web-devicons", "MunifTanjim/nui.nvim", } }
   use {"akinsho/toggleterm.nvim", tag = 'v2.*'}
+  use 'antoinemadec/FixCursorHold.nvim'
 
   -- Tools
   use 'tpope/vim-abolish'

@@ -29,6 +29,7 @@ require('packer').startup(function(use)
   use "fladson/vim-kitty"
   use 'ilyachur/cmake4vim'
   use 'p00f/clangd_extensions.nvim'
+  use 'synaptiko/xit.nvim'
 
   -- Misc UI
   use 'lukas-reineke/indent-blankline.nvim'
@@ -42,6 +43,9 @@ require('packer').startup(function(use)
   use 'tpope/vim-abolish'
   use 'bkad/CamelCaseMotion'
   use 'vim-test/vim-test'
+  use 'ggandor/leap.nvim'
+
+  use 'edluffy/hologram.nvim'
 
   -- LSP
   use 'neovim/nvim-lspconfig'
@@ -70,6 +74,7 @@ require('packer').startup(function(use)
 end)
 
 --- }}}
+--
 --- Options {{{
 
 
@@ -125,6 +130,7 @@ hi SpellBad cterm=undercurl gui=undercurl
 
 local builtins = require("null-ls").builtins
 require("null-ls").setup({
+  root_dir = require('lspconfig.util').root_pattern(".null-ls-root", "Makefile", ".git", "setup.py", "pyproject.toml"),
   sources = {
     builtins.diagnostics.pylint,
     builtins.diagnostics.jsonlint,
@@ -134,11 +140,11 @@ require("null-ls").setup({
     builtins.formatting.markdownlint,
     builtins.formatting.black,
     builtins.formatting.cmake_format,
-    builtins.code_actions.gitsigns
   }
 })
 
 -- LSP settings
+
 local lspconfig = require 'lspconfig'
 local on_attach = function(_, bufnr)
   local opts = { buffer = bufnr }
@@ -156,16 +162,17 @@ local on_attach = function(_, bufnr)
   vim.api.nvim_create_user_command("Format", vim.lsp.buf.formatting, {})
   vim.api.nvim_create_user_command("FormatRange", vim.lsp.buf.range_formatting, {})
   vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-  vim.keymap.set('n', '<leader>fb', vim.lsp.buf.formatting, opts)
-  vim.keymap.set('n', '<leader>fr', vim.lsp.buf.range_formatting, opts)
 end
+
+vim.keymap.set('n', '<leader>fb', vim.lsp.buf.formatting, opts)
+vim.keymap.set('n', '<leader>fr', vim.lsp.buf.range_formatting, opts)
 
 -- nvim-cmp supports additional completion capabilities
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 -- Enable the following language servers
-local servers = { 'jsonls', 'marksman', 'yamlls', 'rust_analyzer', 'pyright', 'tsserver' }
+local servers = { 'jsonls', 'marksman', 'yamlls', 'rust_analyzer', 'tsserver' }
 for _, lsp in ipairs(servers) do
   lspconfig[lsp].setup {
     on_attach = on_attach,
@@ -173,6 +180,16 @@ for _, lsp in ipairs(servers) do
     flags = { debounce_text_changes = 500 }
   }
 end
+
+lspconfig.pyright.setup {
+    on_attach = on_attach,
+    capabilities = capabilities,
+    flags = { debounce_text_changes = 500 },
+	-- Disable diagnostics
+    handlers = {
+        ['textDocument/publishDiagnostics'] = function(...) end
+    },
+}
 
 require("clangd_extensions").setup {
   server = {
@@ -188,7 +205,7 @@ require("clangd_extensions").setup {
 -- Treesitter configuration
 -- Parsers must be installed manually via :TSInstall
 require('nvim-treesitter.configs').setup {
-  ensure_installed = { "c", "cpp", "python", "yaml", "json", "html", "lua", "dot", "cmake", "bash" },
+  ensure_installed = { "c", "cpp", "python", "yaml", "json", "html", "lua", "dot", "cmake", "bash", "xit" },
   highlight = {
     enable = true, -- false will disable the whole extension
   },
@@ -234,6 +251,15 @@ require('nvim-treesitter.configs').setup {
       goto_previous_end = {
         ['[M'] = '@function.outer',
         ['[]'] = '@class.outer',
+      },
+    },
+	swap = {
+      enable = true,
+      swap_next = {
+        ["<leader>sp"] = "@parameter.inner",
+      },
+      swap_previous = {
+        ["<leader>sP"] = "@parameter.inner",
       },
     },
   },
@@ -354,8 +380,14 @@ vim.api.nvim_create_autocmd({ 'FileType' }, {
 
 vim.api.nvim_create_autocmd({ 'FileType' }, {
   desc = 'doxygen comments',
-  pattern = 'python,c,cpp',
-  command = 'set comments^=:///'
+  pattern = 'c,cpp',
+  command = 'set comments^=b:///'
+})
+
+vim.api.nvim_create_autocmd({ 'FileType' }, {
+  desc = 'JSON',
+  pattern = 'json',
+  command = 'set formatoptions-=t'
 })
 
 vim.api.nvim_create_autocmd({ 'BufEnter' }, {
@@ -369,7 +401,6 @@ vim.api.nvim_create_autocmd({ 'TermOpen' }, {
   pattern = '*',
   command = 'set nospell nonumber'
 })
-
 
 -- Lualine
 
@@ -410,6 +441,7 @@ vim.g.cmake_ctest_args = "--output-on-failure"
 
 vim.keymap.set('n', '<leader>cb', ':CMakeBuild<CR>')
 vim.keymap.set('n', '<leader>ct', ':CTest<CR>')
+vim.keymap.set('n', '<leader>cT', ':CTest -VV<CR>')
 
 
 -- Indent blankline
@@ -421,6 +453,10 @@ require('indent_blankline').setup { char = '┊', show_trailing_blankline_indent
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
+
+-- Xit
+
+require('xit').setup({})
 
 -- Git blame
 
@@ -463,7 +499,6 @@ require('gitsigns').setup{
     map('n', '<leader>tb', gs.toggle_current_line_blame)
     map('n', '<leader>hd', gs.diffthis)
     map('n', '<leader>hD', function() gs.diffthis('~') end)
-    map('n', '<leader>td', gs.toggle_deleted)
 
     -- Text object
     map({'o', 'x'}, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
@@ -473,9 +508,9 @@ require('gitsigns').setup{
 -- Test
 
 vim.keymap.set('n', '<leader>tn', ':TestNearest<CR>', { silent = true })
-vim.keymap.set('n', '<leader>tf', ':TestFile<CR>', { silent = true })
-vim.keymap.set('n', '<leader>ts', ':TestSuite<CR>', { silent = true })
-vim.keymap.set('n', '<leader>tl', ':TestLast<CR>', { silent = true })
+vim.keymap.set('n', '<leader>tf', ':TestFile --verbose<CR>', { silent = true })
+vim.keymap.set('n', '<leader>ts', ':TestSuite --verbose<CR>', { silent = true })
+vim.keymap.set('n', '<leader>tl', ':TestLast --verbose<CR>', { silent = true })
 vim.keymap.set('n', '<leader>tv', ':TestVisit<CR>', { silent = true })
 
 vim.cmd [[
@@ -493,7 +528,7 @@ vim.keymap.set('', '<leader>bg', ':Neotree git_status toggle<CR>', { noremap = t
 vim.keymap.set('', ';', require 'fzf-lua'.files, { noremap = true })
 vim.keymap.set('', '<leader>sf', require 'fzf-lua'.files, { noremap = true })
 vim.keymap.set('', '<leader>sb', require 'fzf-lua'.buffers, { noremap = true })
-vim.keymap.set('', '<leader>st', require 'fzf-lua'.live_grep, { noremap = true })
+vim.keymap.set('', '<leader>st', require 'fzf-lua'.live_grep_native, { noremap = true })
 vim.keymap.set('', '<leader>sw', require 'fzf-lua'.grep_cword, { noremap = true })
 vim.keymap.set('', '<leader>sg', require 'fzf-lua'.git_commits, { noremap = true })
 vim.keymap.set('', '<leader>ss', require 'fzf-lua'.spell_suggest, { noremap = true })
@@ -502,7 +537,10 @@ vim.keymap.set('', '<leader>sl', require 'fzf-lua'.resume, { noremap = true })
 
 require('fzf-lua').setup {
   winopts = { preview = { horizontal = 'right:40%' } },
-  files = { previewer = false }
+  files = { previewer = false },
+	grep = {
+	    rg_opts = "--auto-hybrid-regex --column --line-number --no-heading --color=always --smart-case --max-columns=512",
+	}
 }
 
 -- Toggleterm
@@ -510,6 +548,10 @@ require('fzf-lua').setup {
 require("toggleterm").setup {
     open_mapping = [[<c-t>]],
 }
+
+-- Leap
+
+require('leap').set_default_keymaps()
 
 -- }}}
 --- Bits and bobs {{{
@@ -555,6 +597,9 @@ function! CommentWrap() range
 endfunction
 
 vnoremap <leader>fc :<c-u>call CommentWrap()<CR>
+
+highlight NonBreakingSpace ctermbg=red guibg=red cterm=underline
+match NonBreakingSpace / /
 
 ]]
 
